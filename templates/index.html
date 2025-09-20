@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FRA Claim Processor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="logo">
+      <img src="{{ url_for('static', filename='gov_logo.png') }}" alt="Government Logo">
+      <span>Government of India</span>
+    </div>
+    <h1>FRA Claim Processor</h1>
+  </header>
+
+  <main class="container">
+    <!-- Existing Claims -->
+    <section class="card">
+      <h2>Existing Claims</h2>
+      <pre id="initialApiResponse">Loading...</pre>
+    </section>
+
+    <!-- File Upload Form -->
+    <section class="card">
+      <h2>Upload Claim Document (PDF)</h2>
+      <form id="uploadForm" method="post" enctype="multipart/form-data">
+        <div class="file-input-wrapper">
+          <label for="pdfFile" class="custom-file-upload">Choose File</label>
+          <input type="file" id="pdfFile" name="file" accept="application/pdf" />
+          <span id="fileName">No file chosen</span>
+        </div>
+
+        <button type="submit" id="submitBtn">Upload & Process</button>
+        <div id="loading" class="loading-spinner" style="display:none;"></div>
+      </form>
+    </section>
+
+    <!-- Error Message -->
+    {% if error %}
+      <p class="error-message">{{ error }}</p>
+    {% endif %}
+
+    <!-- API Result -->
+    {% if result %}
+      <section class="card">
+        <h2>Processed Claim Result</h2>
+        <pre id="apiResponse">{{ result | tojson(indent=2) }}</pre>
+      </section>
+    {% endif %}
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2025 Government of India. All Rights Reserved.</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

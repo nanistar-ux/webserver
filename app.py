@@ -1,16 +1,18 @@
 from flask import Flask, render_template, request, redirect, flash
 import requests
+import os
 
 # -----------------------------
 # Flask app (frontend)
 # -----------------------------
 app = Flask(__name__)
-app.secret_key = "supersecret"  # Required for flashing errors
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "supersecret")  # Secure via env var in production
 
-MODEL_API_URL = "http://10.212.239.250:8000/api/process_claim"
-WEBGIS_API_URL = "http://10.212.239.250:5001/api/claims"
-MODEL_API_KEY = "YOUR_SECRET_API_KEY_HERE"
-WEBGIS_API_KEY = "SIH2025_SECRET_123"
+# API configs (set in Render dashboard)
+MODEL_API_URL = os.getenv("MODEL_API_URL", "http://10.212.239.250:8000/api/process_claim")
+WEBGIS_API_URL = os.getenv("WEBGIS_API_URL", "http://10.212.239.250:5001/api/claims")
+MODEL_API_KEY = os.getenv("MODEL_API_KEY", "YOUR_SECRET_API_KEY_HERE")
+WEBGIS_API_KEY = os.getenv("WEBGIS_API_KEY", "SIH2025_SECRET_123")
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -22,6 +24,7 @@ def index():
             flash("No file uploaded", "error")
             return render_template("index.html", result=result)
 
+        # Validate file size
         file.seek(0, 2)
         size = file.tell()
         file.seek(0)
@@ -34,7 +37,7 @@ def index():
             files = {"file": (file.filename, file.read(), file.content_type)}
             headers = {"x-api-key": MODEL_API_KEY}
             response = requests.post(MODEL_API_URL, headers=headers, files=files, timeout=30)
-            
+
             if response.status_code != 200:
                 flash(f"Model API request failed: {response.text}", "error")
                 return render_template("index.html", result=result)
@@ -46,14 +49,13 @@ def index():
                 map_response = requests.post(
                     WEBGIS_API_URL,
                     headers={"x-api-key": WEBGIS_API_KEY, "Content-Type": "application/json"},
-                    json=result.get("result"),  # Send only the 'result' from model
+                    json=result.get("result"),
                     timeout=30
                 )
                 if map_response.status_code != 200:
                     flash(f"Map API request failed: {map_response.text}", "error")
                 else:
                     print("Map API response:", map_response.json())
-
             except Exception as e:
                 flash(f"Failed to send to Map API: {str(e)}", "error")
 
@@ -69,4 +71,6 @@ def index():
 # Run Flask frontend
 # -----------------------------
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    port = int(os.getenv("PORT", 8080))  # Render provides $PORT
+    app.run(host="0.0.0.0", port=port, debug=False)
+
